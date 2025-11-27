@@ -1,7 +1,7 @@
 import {User} from "../models/user.model.js"
 import bcrpytjs from "bcryptjs"
 
-export const signup =async(req,res) => { 
+export const signup =async(req,res,next) => { 
     const {username,email,password} = req.body
     const hashedPassword = bcrpytjs.hashSync(password,10)
     const user = new User({username,email,password:hashedPassword})
@@ -11,9 +11,7 @@ export const signup =async(req,res) => {
         .status(201)
         .json("User created Successfully")
     } catch (error) {
-        res.
-        status(500)
-        .json(error.message)
+        next(error)
     }
    
 }

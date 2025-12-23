@@ -2,8 +2,12 @@ import React,{useState} from 'react'
 import { useSelector } from 'react-redux'
 import { useRef } from 'react'
 import { uploadToAppwrite,getFile} from '../appwrite'
+import { useDispatch } from 'react-redux'
+import {updateUserStart,updateUserSuccess,updateUserFailure, deleteUserFailure, deleteUserStart, deleteUserSuccess} from '../redux/user/userSlice'
 function Profile() {
-  const {currentUser} = useSelector(state=>state.user)
+  const [updateSucess,setUpdateSuccess] = useState(false)
+  const dispatch = useDispatch()
+  const {currentUser,loading,error} = useSelector(state=>state.user)
   const fileRef = useRef(null)
 
    const [formData, setFormData] = useState({
@@ -37,10 +41,59 @@ function Profile() {
       console.log("upload failed", error)
     }
   }
+
+   const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.id]: e.target.value })
+  }
+  
+//  console.log(formData); 
+ 
+  const submitHandler = async (e) => {
+    e.preventDefault()
+    try {
+      dispatch(updateUserStart())
+    const res = await fetch(`/api/user/update/${currentUser._id}`,{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json'
+      },
+      body:JSON.stringify(formData)
+    });
+    const data = await res.json()
+
+    if(data.sucess === false) {
+      dispatch(updateUserFailure(data.message))
+      return 
+    }
+
+   dispatch(updateUserSuccess(data))
+   setUpdateSuccess(true)
+    } catch (error) {
+      dispatch(updateUserFailure(error.message))
+    }
+  }
+
+  const handleDeleteUser = async () => {
+    try {
+     dispatch(deleteUserStart())
+      const res = await fetch(`/api/user/delete/${currentUser._id}`,{
+        method:'DELETE', 
+      });
+       const data = await res.json()
+       if(data.sucess==false) {
+        dispatch(deleteUserFailure(data.message))
+        return;
+       }
+       dispatch(deleteUserSuccess(data))
+    } catch (error) {
+      deleteUserFailure(error.message)
+    }
+  }
+  
   return (
     <div className=' max-w-lg mx-auto p-3'>
       <h1 className='text-3xl text-center my-7'>Profile</h1>
-      <form className='flex flex-col gap-4'>
+      <form onSubmit={submitHandler} className='flex flex-col gap-4'>
 
         <input onChange={handleUploadImage}
         type="file" ref={fileRef} 
@@ -52,15 +105,19 @@ function Profile() {
         className='rounded-full h-24 w-24 object-cover cursor-pointer self-center mt-2' 
         src={formData.avatar || currentUser.avatar} alt="" />
 
-        <input type="text" placeholder='username' id='username' className='border p-3 rounded-lg'/>
-        <input type="email" placeholder='email' id='email' className='border p-3 rounded-lg'/>
-        <input type="password" placeholder='password' id='password' className='border p-3 rounded-lg'/>
-        <button className='bg-slate-700 text-white p-3 rounded-lg uppercase hover:opacity-95'>Update</button>
+        <input onChange={handleChange} type="text" defaultValue={currentUser.username} placeholder='username' id='username' className='border p-3 rounded-lg'/>
+        <input onChange={handleChange} type="email" defaultValue={currentUser.email} placeholder='email' id='email' className='border p-3 rounded-lg'/>
+        <input onChange={handleChange} type="password" placeholder='password' id='password' className='border p-3 rounded-lg'/>
+        <button className='bg-slate-700 text-white p-3 rounded-lg uppercase hover:opacity-95'>
+        {loading?'Loading...':'Update'}
+        </button>
       </form>
       <div className='flex justify-between mt-4'>
-        <span className='text-red-700 cursor-pointer'>Delete Account</span>
-        <span className='text-red-700 cursor-pointer'>Sign Out</span>
+        <span onClick={handleDeleteUser} className='text-red-700 cursor-pointer'>Delete Account</span>
+        <span classNam e='text-red-700 cursor-pointer'>Sign Out</span>
       </div>
+      <p className='text-red-700 mt-5'>{error? error:''}</p>
+      <p className='text-green-700 mt-5'>{updateSucess? 'User is Updated Successfully':''}</p>
     </div>
   )
 }

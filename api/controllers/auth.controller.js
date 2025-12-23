@@ -25,7 +25,6 @@ export const signup = async (req, res, next) => {
 };
 
 
-
 export const signin = async (req,res,next) => {
       const {email,password} = req.body
       try {
@@ -81,6 +80,7 @@ export const google = async (req, res, next) => {
     next(error);
   }
 }; 
+
 
 export const signOut = async (req,res,next) => {
   try {

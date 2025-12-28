@@ -24,7 +24,7 @@
         parking: false,
         furnished: false
     })
-    console.log(formData);
+    // console.log(formData);
     // console.log(files);
 
     const storeImage = async (file) => {
